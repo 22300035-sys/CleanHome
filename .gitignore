@@ -1,0 +1,67 @@
+# .NET
+**/bin/
+**/obj/
+**/TestResults/
+*.user
+*.suo
+
+# React / Node
+**/node_modules/
+**/dist/
+**/coverage/
+**/.vite/
+
+# Configuración privada
+.env
+.env.*
+!.env.example
+!.env.*.example
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/secrets.json
+
+# Credenciales y certificados
+*.pfx
+*.p12
+*.pem
+*.key
+*.jks
+*.keystore
+
+# Android y Gradle
+**/.gradle/
+**/.cxx/
+**/.externalNativeBuild/
+**/local.properties
+**/captures/
+frontend/android/app/build/
+frontend/android/build/
+frontend/android/capacitor-cordova-android-plugins/build/
+
+# Recursos generados por Capacitor
+frontend/android/app/src/main/assets/public/
+frontend/android/app/src/main/assets/capacitor.config.json
+
+# Paquetes compilados
+*.apk
+*.aab
+*.apks
+*.hprof
+
+# Respaldos
+*.backup
+*.bak
+*.tmp
+*.log
+
+# Editores
+.vs/
+.vscode/
+.idea/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Documentos privados
+docs/evidence/private/

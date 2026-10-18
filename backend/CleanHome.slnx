@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CleanHome.Api/CleanHome.Api.csproj" />
+    <Project Path="src/CleanHome.Application/CleanHome.Application.csproj" />
+    <Project Path="src/CleanHome.Domain/CleanHome.Domain.csproj" />
+    <Project Path="src/CleanHome.Infrastructure/CleanHome.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CleanHome.IntegrationTests/CleanHome.IntegrationTests.csproj" />
+    <Project Path="tests/CleanHome.UnitTests/CleanHome.UnitTests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,30 @@
+# Configuración general
+* text=auto
+
+# Código y configuraciones
+*.cs text eol=lf
+*.csproj text eol=lf
+*.slnx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.gradle text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+
+# Scripts Windows
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Recursos binarios
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.jar binary
+*.woff binary
+*.woff2 binary
