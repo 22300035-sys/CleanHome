@@ -1,7 +1,11 @@
 using CleanHome.Application.Abstractions.Catalog;
+using CleanHome.Application.Abstractions.Identity;
 using CleanHome.Application.Features.Catalog;
+using CleanHome.Application.Features.Identity;
 using CleanHome.Infrastructure.Persistence;
 using CleanHome.Infrastructure.Persistence.Repositories;
+using CleanHome.Infrastructure.Persistence.Repositories.Identity;
+using CleanHome.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,11 +14,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-// Servicios de salud.
+// Comprobaciones de salud.
 builder.Services.AddHealthChecks();
 
-// Configuración de PostgreSQL.
-// La cadena proviene de User Secrets o variables de entorno.
+// Conexión segura a PostgreSQL.
+// La cadena se obtiene de User Secrets o variables de entorno.
 var connectionString = builder.Configuration
     .GetConnectionString("CleanHome");
 
@@ -29,25 +33,34 @@ if (string.IsNullOrWhiteSpace(connectionString))
 builder.Services.AddDbContext<CleanHomeDbContext>(
     options => options.UseNpgsql(connectionString));
 
-// Dependencias de la aplicación.
+// Catálogo.
 builder.Services.AddScoped<ServiceCategoryService>();
 
-// Implementaciones de infraestructura.
 builder.Services.AddScoped<
     IServiceCategoryRepository,
     ServiceCategoryRepository>();
 
+// Registro e identidad.
+builder.Services.AddScoped<UserRegistrationService>();
+
+builder.Services.AddScoped<
+    IUserRegistrationRepository,
+    UserRegistrationRepository>();
+
+// Hash seguro de contraseñas.
+builder.Services.AddSingleton<
+    IPasswordHasher,
+    Argon2PasswordHasher>();
+
 var app = builder.Build();
 
-// OpenAPI únicamente en desarrollo.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-// En producción, HTTPS debe aplicarse también
-// desde el proxy o plataforma de alojamiento.
-if (!app.Environment.IsDevelopment())
+if (!app.Environment.IsDevelopment() &&
+    !app.Environment.IsEnvironment("Testing"))
 {
     app.UseHttpsRedirection();
 }
@@ -56,8 +69,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Liveness: confirma que el proceso HTTP responde.
-// No verifica aún PostgreSQL.
 app.MapGet("/health", () =>
 {
     return Results.Ok(new
@@ -74,7 +85,6 @@ app.MapGet("/health", () =>
 
 app.Run();
 
-// Permite pruebas de integración con WebApplicationFactory.
 public partial class Program
 {
 }

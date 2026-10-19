@@ -1,132 +1,65 @@
 using System.Net;
 using System.Net.Http.Json;
+using CleanHome.IntegrationTests.Infrastructure;
 using CleanHome.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
 
 namespace CleanHome.IntegrationTests;
 
+[Collection("CleanHome database")]
 public sealed class ServiceCategoriesIntegrationTests
 {
+    private readonly CleanHomeApiFixture _fixture;
+
+    public ServiceCategoriesIntegrationTests(
+        CleanHomeApiFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
     [Fact]
     public async Task ServiceCategories_ReturnsSeededCategoriesFromPostgreSql()
     {
-        const string testVariable =
-            "CLEANHOME_TEST_CONNECTION_STRING";
+        using (var scope = _fixture.CreateScope())
+        {
+            var db = scope.ServiceProvider
+                .GetRequiredService<CleanHomeDbContext>();
 
-        const string aspNetConnectionVariable =
-            "ConnectionStrings__CleanHome";
+            var count = await db.ServiceCategories.CountAsync();
 
-        var connectionString =
-            Environment.GetEnvironmentVariable(testVariable);
+            Assert.Equal(3, count);
+        }
 
-        Assert.False(
-            string.IsNullOrWhiteSpace(connectionString),
-            $"Falta configurar {testVariable}."
-        );
-
-        // Verificamos que la base de destino sea exclusivamente
-        // la que reservamos para las pruebas.
-        var connectionBuilder =
-            new NpgsqlConnectionStringBuilder(connectionString);
+        using var response = await _fixture.Client.GetAsync(
+            "/api/v1/service-categories");
 
         Assert.Equal(
-            "cleanhome_test",
-            connectionBuilder.Database
-        );
+            HttpStatusCode.OK,
+            response.StatusCode);
 
-        // Conservamos cualquier valor anterior para restaurarlo.
-        var previousConnectionString =
-            Environment.GetEnvironmentVariable(
-                aspNetConnectionVariable
-            );
+        var categories = await response.Content
+            .ReadFromJsonAsync<List<ServiceCategoryResponse>>();
 
-        try
-        {
-            // Esta variable debe existir ANTES de arrancar
-            // WebApplicationFactory y ejecutar Program.cs.
-            Environment.SetEnvironmentVariable(
-                aspNetConnectionVariable,
-                connectionString
-            );
+        Assert.NotNull(categories);
+        Assert.Equal(3, categories.Count);
 
-            using var factory =
-                new WebApplicationFactory<Program>()
-                    .WithWebHostBuilder(builder =>
-                    {
-                        builder.UseEnvironment("Testing");
-                    });
+        Assert.Contains(
+            categories,
+            category => category.Slug == "limpieza-general");
 
-            using var client = factory.CreateClient();
+        Assert.Contains(
+            categories,
+            category => category.Slug == "limpieza-profunda");
 
-            // Aplicar las migraciones reales a PostgreSQL.
-            using (var scope = factory.Services.CreateScope())
-            {
-                var db = scope.ServiceProvider
-                    .GetRequiredService<CleanHomeDbContext>();
-
-                await db.Database.MigrateAsync();
-
-                var databaseCount =
-                    await db.ServiceCategories.CountAsync();
-
-                Assert.Equal(3, databaseCount);
-            }
-
-            // Consultar el endpoint real de la API.
-            using var response = await client.GetAsync(
-                "/api/v1/service-categories"
-            );
-
-            Assert.Equal(
-                HttpStatusCode.OK,
-                response.StatusCode
-            );
-
-            var categories = await response.Content
-                .ReadFromJsonAsync<
-                    List<ServiceCategoryResponse>
-                >();
-
-            Assert.NotNull(categories);
-            Assert.Equal(3, categories.Count);
-
-            Assert.Contains(
-                categories,
-                category =>
-                    category.Slug == "limpieza-general"
-            );
-
-            Assert.Contains(
-                categories,
-                category =>
-                    category.Slug == "limpieza-profunda"
-            );
-
-            Assert.Contains(
-                categories,
-                category =>
-                    category.Slug == "limpieza-oficinas"
-            );
-        }
-        finally
-        {
-            // No dejamos la conexión de pruebas configurada
-            // para otras pruebas del mismo proceso.
-            Environment.SetEnvironmentVariable(
-                aspNetConnectionVariable,
-                previousConnectionString
-            );
-        }
+        Assert.Contains(
+            categories,
+            category => category.Slug == "limpieza-oficinas");
     }
 
     private sealed record ServiceCategoryResponse(
         Guid Id,
         string Name,
         string Slug,
-        string Description
-    );
+        string Description);
 }
