@@ -8,7 +8,9 @@ using Npgsql;
 
 namespace CleanHome.IntegrationTests.Infrastructure;
 
-[CollectionDefinition("CleanHome database", DisableParallelization = true)]
+[CollectionDefinition(
+    "CleanHome database",
+    DisableParallelization = true)]
 public sealed class CleanHomeDatabaseCollection
     : ICollectionFixture<CleanHomeApiFixture>
 {
@@ -19,7 +21,16 @@ public sealed class CleanHomeApiFixture : IDisposable
     private const string ApiConnectionVariable =
         "ConnectionStrings__CleanHome";
 
+    private const string JwtKeyVariable =
+        "Jwt__SigningKey";
+
+    // Exclusivamente para el proceso automatizado de pruebas.
+    // Nunca debe usarse para firmar tokens reales.
+    private const string TestSigningKey =
+        "CleanHome-IntegrationTests-Only-NotForProduction-2026-Key";
+
     private readonly string? _previousConnectionString;
+    private readonly string? _previousJwtKey;
 
     private bool _disposed;
 
@@ -40,15 +51,22 @@ public sealed class CleanHomeApiFixture : IDisposable
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
-                "Las pruebas solo pueden utilizar cleanhome_test.");
+                "Las pruebas solamente pueden utilizar cleanhome_test.");
         }
 
         _previousConnectionString =
             Environment.GetEnvironmentVariable(ApiConnectionVariable);
 
+        _previousJwtKey =
+            Environment.GetEnvironmentVariable(JwtKeyVariable);
+
         Environment.SetEnvironmentVariable(
             ApiConnectionVariable,
             connectionString);
+
+        Environment.SetEnvironmentVariable(
+            JwtKeyVariable,
+            TestSigningKey);
 
         try
         {
@@ -72,6 +90,10 @@ public sealed class CleanHomeApiFixture : IDisposable
             Environment.SetEnvironmentVariable(
                 ApiConnectionVariable,
                 _previousConnectionString);
+
+            Environment.SetEnvironmentVariable(
+                JwtKeyVariable,
+                _previousJwtKey);
 
             throw;
         }
@@ -122,5 +144,9 @@ public sealed class CleanHomeApiFixture : IDisposable
         Environment.SetEnvironmentVariable(
             ApiConnectionVariable,
             _previousConnectionString);
+
+        Environment.SetEnvironmentVariable(
+            JwtKeyVariable,
+            _previousJwtKey);
     }
 }
