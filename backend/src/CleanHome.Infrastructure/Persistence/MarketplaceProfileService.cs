@@ -256,6 +256,23 @@ public sealed class MarketplaceProfileService
 
         if (published)
         {
+            // Comprobar el estado actual del usuario en PostgreSQL.
+            // No se confía en un claim del JWT.
+            var verifiedUser = await _db.Users
+                .AsNoTracking()
+                .AnyAsync(
+                    x => x.Id == userId &&
+                         x.IsActive &&
+                         x.IsEmailVerified,
+                    ct);
+
+            if (!verifiedUser)
+            {
+                throw new InvalidOperationException(
+                    "Debes verificar tu correo electrónico " +
+                    "antes de publicar tu perfil profesional.");
+            }
+
             var hasActiveOffering = await _db.WorkerOfferings
                 .AnyAsync(
                     x => x.WorkerProfileId == profile.Id &&
@@ -263,11 +280,17 @@ public sealed class MarketplaceProfileService
                     ct);
 
             if (!hasActiveOffering)
+            {
                 throw new InvalidOperationException(
                     "Debes configurar un servicio activo.");
+            }
         }
 
+        // Conserva las reglas de aprobación administrativa
+        // implementadas en la entidad WorkerProfile.
+        // Despublicar no requiere correo verificado.
         profile.SetPublished(published);
+
         await _db.SaveChangesAsync(ct);
     }
 

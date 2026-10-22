@@ -3,6 +3,7 @@ using CleanHome.Domain.Entities.Bookings;
 using CleanHome.Domain.Entities.Community;
 using CleanHome.Domain.Entities.Identity;
 using CleanHome.Domain.Entities.Marketplace;
+using CleanHome.Domain.Entities.Verification;
 using Microsoft.EntityFrameworkCore;
 
 namespace CleanHome.Infrastructure.Persistence;
@@ -93,6 +94,16 @@ public sealed class CleanHomeDbContext : DbContext
     // Administración
     public DbSet<AdminMembership> AdminMemberships =>
         Set<AdminMembership>();
+
+    // Documentos y ubicaciones verificadas
+    public DbSet<CustomerLocation> CustomerLocations =>
+        Set<CustomerLocation>();
+
+    public DbSet<PrivateDocument> PrivateDocuments =>
+        Set<PrivateDocument>();
+
+    public DbSet<DocumentAccessAudit> DocumentAccessAudits =>
+        Set<DocumentAccessAudit>();
 
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)

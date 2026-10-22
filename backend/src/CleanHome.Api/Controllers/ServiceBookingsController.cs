@@ -19,11 +19,12 @@ public sealed class ServiceBookingsController : ControllerBase
         _service = service;
     }
 
+    [Authorize(Policy = "VerifiedEmail")]
     [HttpPost("service-requests")]
-    public async Task<IActionResult> CreateRequest(
+    public Task<IActionResult> CreateRequest(
         [FromBody] CreateServiceRequestDto request,
         CancellationToken ct) =>
-        await Execute(async () =>
+        Execute(async () =>
         {
             var result = await _service.CreateRequestAsync(
                 UserId(), request, ct);
@@ -38,35 +39,37 @@ public sealed class ServiceBookingsController : ControllerBase
         Ok(await _service.GetMyRequestsAsync(UserId(), ct));
 
     [HttpGet("service-requests/available")]
-    public async Task<IActionResult> AvailableRequests(
-        [FromQuery] string? city, CancellationToken ct) =>
-        await Execute(async () => Ok(
+    public Task<IActionResult> AvailableRequests(
+        [FromQuery] string? city,
+        CancellationToken ct) =>
+        Execute(async () => Ok(
             await _service.BrowseRequestsAsync(UserId(), city, ct)));
 
     [HttpGet("service-requests/{id:guid}")]
-    public async Task<IActionResult> RequestDetail(
+    public Task<IActionResult> RequestDetail(
         Guid id, CancellationToken ct) =>
-        await Execute(async () =>
+        Execute(async () =>
         {
             var result = await _service.GetRequestAsync(UserId(), id, ct);
             return result is null ? NotFound() : Ok(result);
         });
 
     [HttpPost("service-requests/{id:guid}/cancel")]
-    public async Task<IActionResult> CancelRequest(
+    public Task<IActionResult> CancelRequest(
         Guid id, CancellationToken ct) =>
-        await Execute(async () =>
+        Execute(async () =>
         {
             await _service.CancelRequestAsync(UserId(), id, ct);
             return NoContent();
         });
 
+    [Authorize(Policy = "VerifiedEmail")]
     [HttpPost("service-requests/{id:guid}/quotes")]
-    public async Task<IActionResult> CreateQuote(
+    public Task<IActionResult> CreateQuote(
         Guid id,
         [FromBody] CreateServiceQuoteDto request,
         CancellationToken ct) =>
-        await Execute(async () =>
+        Execute(async () =>
         {
             var result = await _service.CreateQuoteAsync(
                 UserId(), id, request, ct);
@@ -77,29 +80,35 @@ public sealed class ServiceBookingsController : ControllerBase
         });
 
     [HttpGet("service-requests/{id:guid}/quotes")]
-    public async Task<IActionResult> GetQuotes(
+    public Task<IActionResult> GetQuotes(
         Guid id, CancellationToken ct) =>
-        await Execute(async () => Ok(
+        Execute(async () => Ok(
             await _service.GetQuotesAsync(UserId(), id, ct)));
 
     [HttpPost("service-quotes/{id:guid}/withdraw")]
-    public async Task<IActionResult> WithdrawQuote(
+    public Task<IActionResult> WithdrawQuote(
         Guid id, CancellationToken ct) =>
-        await Execute(async () =>
+        Execute(async () =>
         {
             await _service.WithdrawQuoteAsync(UserId(), id, ct);
             return NoContent();
         });
 
-    [HttpPost("service-requests/{requestId:guid}/quotes/{quoteId:guid}/accept")]
-    public async Task<IActionResult> AcceptQuote(
-        Guid requestId, Guid quoteId, CancellationToken ct) =>
-        await Execute(async () =>
+    [Authorize(Policy = "VerifiedEmail")]
+    [HttpPost(
+        "service-requests/{requestId:guid}/quotes/{quoteId:guid}/accept")]
+    public Task<IActionResult> AcceptQuote(
+        Guid requestId,
+        Guid quoteId,
+        CancellationToken ct) =>
+        Execute(async () =>
         {
             var booking = await _service.AcceptQuoteAsync(
                 UserId(), requestId, quoteId, ct);
 
-            return Created($"/api/v1/bookings/{booking.Id}", booking);
+            return Created(
+                $"/api/v1/bookings/{booking.Id}",
+                booking);
         });
 
     [HttpGet("bookings/mine")]
@@ -107,37 +116,38 @@ public sealed class ServiceBookingsController : ControllerBase
         Ok(await _service.GetMyBookingsAsync(UserId(), ct));
 
     [HttpGet("bookings/{id:guid}")]
-    public async Task<IActionResult> BookingDetail(
+    public Task<IActionResult> BookingDetail(
         Guid id, CancellationToken ct) =>
-        await Execute(async () =>
+        Execute(async () =>
         {
             var result = await _service.GetBookingAsync(UserId(), id, ct);
             return result is null ? NotFound() : Ok(result);
         });
 
     [HttpPost("bookings/{id:guid}/start")]
-    public async Task<IActionResult> StartBooking(
+    public Task<IActionResult> StartBooking(
         Guid id, CancellationToken ct) =>
-        await ChangeStatus(id, "start", null, ct);
+        ChangeStatus(id, "start", null, ct);
 
     [HttpPost("bookings/{id:guid}/complete")]
-    public async Task<IActionResult> CompleteBooking(
+    public Task<IActionResult> CompleteBooking(
         Guid id, CancellationToken ct) =>
-        await ChangeStatus(id, "complete", null, ct);
+        ChangeStatus(id, "complete", null, ct);
 
     [HttpPost("bookings/{id:guid}/cancel")]
-    public async Task<IActionResult> CancelBooking(
+    public Task<IActionResult> CancelBooking(
         Guid id,
         [FromBody] CancelBookingDto request,
         CancellationToken ct) =>
-        await ChangeStatus(id, "cancel", request.Reason, ct);
+        ChangeStatus(id, "cancel", request.Reason, ct);
 
+    [Authorize(Policy = "VerifiedEmail")]
     [HttpPost("service-requests/{id:guid}/repeat")]
-    public async Task<IActionResult> RepeatRequest(
+    public Task<IActionResult> RepeatRequest(
         Guid id,
         [FromBody] RepeatServiceRequestDto request,
         CancellationToken ct) =>
-        await Execute(async () =>
+        Execute(async () =>
         {
             var result = await _service.RepeatRequestAsync(
                 UserId(), id, request, ct);

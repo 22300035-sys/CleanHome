@@ -43,10 +43,10 @@ public sealed class AuthenticationService : IAuthenticationService
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var email = request.Email?.Trim() ?? string.Empty;
-        var password = request.Password ?? string.Empty;
-        var deviceName = request.DeviceName?.Trim() ?? string.Empty;
-        var platform = request.Platform?.Trim() ?? string.Empty;
+        var email = request.Email?.Trim() ?? "";
+        var password = request.Password ?? "";
+        var deviceName = request.DeviceName?.Trim() ?? "";
+        var platform = request.Platform?.Trim() ?? "";
 
         if (email.Length is < 3 or > 254 ||
             string.IsNullOrWhiteSpace(password) ||
@@ -59,24 +59,27 @@ public sealed class AuthenticationService : IAuthenticationService
 
         var normalizedEmail = email.ToUpperInvariant();
 
-        var user = await _db.Users
+        var preliminaryUser = await _db.Users
             .AsNoTracking()
             .SingleOrDefaultAsync(
                 x => x.NormalizedEmail == normalizedEmail,
                 cancellationToken);
 
-        if (user is null || !user.IsActive)
+        if (preliminaryUser is null || !preliminaryUser.IsActive)
         {
             await RecordRejectedLoginAsync(
-                user?.Id,
+                preliminaryUser?.Id,
                 cancellationToken);
 
             throw new AuthenticationException();
         }
 
+        // Verificamos la contraseña antes de abrir una transacción,
+        // evitando mantener bloqueos durante Argon2id.
         var credential = await _db.UserCredentials
+            .AsNoTracking()
             .SingleOrDefaultAsync(
-                x => x.UserId == user.Id,
+                x => x.UserId == preliminaryUser.Id,
                 cancellationToken);
 
         if (credential is null ||
@@ -85,14 +88,23 @@ public sealed class AuthenticationService : IAuthenticationService
                 credential.PasswordHash))
         {
             await RecordRejectedLoginAsync(
-                user.Id,
+                preliminaryUser.Id,
                 cancellationToken);
 
             throw new AuthenticationException();
         }
 
+        // Si hace falta recalcular el hash, lo hacemos fuera
+        // de la transacción.
+        var needsRehash = _passwordHasher.NeedsRehash(
+            credential.PasswordHash);
+
+        var upgradedHash = needsRehash
+            ? _passwordHasher.HashPassword(password)
+            : null;
+
         var session = new UserSession(
-            user.Id,
+            preliminaryUser.Id,
             deviceName,
             platform,
             DateTimeOffset.UtcNow.Add(SessionLifetime));
@@ -104,22 +116,39 @@ public sealed class AuthenticationService : IAuthenticationService
             refreshValue.TokenHash,
             session.ExpiresAt);
 
-        // Generamos el JWT antes de confirmar la transacción.
-        // Si la firma falla, no crearemos una sesión inutilizable.
         var access = _accessTokens.Generate(
-            user.Id,
+            preliminaryUser.Id,
             session.Id);
 
         await using (var transaction =
             await _db.Database.BeginTransactionAsync(
+                IsolationLevel.ReadCommitted,
                 cancellationToken))
         {
-            if (_passwordHasher.NeedsRehash(
-                credential.PasswordHash))
+            // El bloqueo del usuario serializa este login con
+            // los cambios de contraseña.
+            var user = await LockUserAsync(
+                preliminaryUser.Id,
+                cancellationToken);
+
+            if (user is null || !user.IsActive)
+                throw new AuthenticationException();
+
+            var currentCredential = await _db.UserCredentials
+                .SingleOrDefaultAsync(
+                    x => x.UserId == user.Id,
+                    cancellationToken);
+
+            // Si la contraseña cambió desde la primera lectura,
+            // no podemos crear una sesión con credenciales antiguas.
+            if (currentCredential is null ||
+                currentCredential.PasswordHash != credential.PasswordHash)
             {
-                credential.ChangePasswordHash(
-                    _passwordHasher.HashPassword(password));
+                throw new AuthenticationException();
             }
+
+            if (upgradedHash is not null)
+                currentCredential.ChangePasswordHash(upgradedHash);
 
             _db.UserSessions.Add(session);
             _db.RefreshTokens.Add(refresh);
@@ -136,7 +165,7 @@ public sealed class AuthenticationService : IAuthenticationService
 
         _logger.LogInformation(
             "Login correcto. UserId={UserId}; SessionId={SessionId}",
-            user.Id,
+            preliminaryUser.Id,
             session.Id);
 
         return new AuthenticationResponse(
@@ -153,40 +182,70 @@ public sealed class AuthenticationService : IAuthenticationService
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var tokenValue = request.RefreshToken ?? string.Empty;
+        var tokenValue = request.RefreshToken ?? "";
 
         if (tokenValue.Length is < 1 or > 256)
             throw new AuthenticationException();
 
         var hash = _refreshTokens.ComputeHash(tokenValue);
 
+        // La primera lectura solamente localiza la sesión.
+        // No autoriza todavía la renovación.
+        var preliminary = await _db.RefreshTokens
+            .AsNoTracking()
+            .Where(x => x.TokenHash == hash)
+            .Select(x => new
+            {
+                x.SessionId
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (preliminary is null)
+            throw new AuthenticationException();
+
+        var ownerId = await _db.UserSessions
+            .AsNoTracking()
+            .Where(x => x.Id == preliminary.SessionId)
+            .Select(x => (Guid?)x.UserId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (!ownerId.HasValue)
+            throw new AuthenticationException();
+
         await using var transaction =
             await _db.Database.BeginTransactionAsync(
                 IsolationLevel.ReadCommitted,
                 cancellationToken);
 
-        // Bloqueo de fila para serializar renovaciones
-        // concurrentes del mismo refresh token.
-        var storedToken = await _db.RefreshTokens
-            .FromSqlInterpolated(
-                $"SELECT * FROM refresh_tokens WHERE token_hash = {hash} FOR UPDATE")
-            .SingleOrDefaultAsync(cancellationToken);
+        // Orden de bloqueo: usuario, sesión, token.
+        var user = await LockUserAsync(
+            ownerId.Value,
+            cancellationToken);
 
-        if (storedToken is null)
+        if (user is null || !user.IsActive)
             throw new AuthenticationException();
 
-        var session = await _db.UserSessions
-            .SingleOrDefaultAsync(
-                x => x.Id == storedToken.SessionId,
-                cancellationToken);
+        var session = await LockSessionAsync(
+            preliminary.SessionId,
+            cancellationToken);
 
-        if (session is null)
+        if (session is null || session.UserId != user.Id)
             throw new AuthenticationException();
+
+        var storedToken = await LockRefreshTokenAsync(
+            hash,
+            cancellationToken);
+
+        if (storedToken is null ||
+            storedToken.SessionId != session.Id)
+        {
+            throw new AuthenticationException();
+        }
 
         var now = DateTimeOffset.UtcNow;
 
-        // Un token consumido no puede volver a utilizarse.
-        // La revocación y el evento se confirman juntos.
+        // Reutilizar un token consumido provoca la revocación
+        // de toda la sesión, incluso si existe otro token vigente.
         if (storedToken.ConsumedAt is not null)
         {
             session.Revoke("refresh_token_reuse");
@@ -194,14 +253,14 @@ public sealed class AuthenticationService : IAuthenticationService
             _db.SecurityEvents.Add(new SecurityEvent(
                 "refresh_token_reuse",
                 "rejected",
-                session.UserId,
+                user.Id,
                 session.Id));
 
             await _db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             _logger.LogWarning(
-                "Refresh token reutilizado. SessionId={SessionId}",
+                "Reutilización de refresh token. SessionId={SessionId}",
                 session.Id);
 
             throw new AuthenticationException();
@@ -213,15 +272,6 @@ public sealed class AuthenticationService : IAuthenticationService
             throw new AuthenticationException();
         }
 
-        var user = await _db.Users
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                x => x.Id == session.UserId,
-                cancellationToken);
-
-        if (user is null || !user.IsActive)
-            throw new AuthenticationException();
-
         var newValue = _refreshTokens.Generate();
 
         var replacement = new RefreshToken(
@@ -229,15 +279,14 @@ public sealed class AuthenticationService : IAuthenticationService
             newValue.TokenHash,
             session.ExpiresAt);
 
-        // Primero comprobamos que se puede emitir el JWT.
         var access = _accessTokens.Generate(
             user.Id,
             session.Id);
 
         storedToken.Consume(replacement.Id);
+        session.RegisterActivity();
 
         _db.RefreshTokens.Add(replacement);
-        session.RegisterActivity();
 
         _db.SecurityEvents.Add(new SecurityEvent(
             "token_rotated",
@@ -249,7 +298,7 @@ public sealed class AuthenticationService : IAuthenticationService
         await transaction.CommitAsync(cancellationToken);
 
         _logger.LogInformation(
-            "Token renovado. UserId={UserId}; SessionId={SessionId}",
+            "Refresh token renovado. UserId={UserId}; SessionId={SessionId}",
             user.Id,
             session.Id);
 
@@ -266,14 +315,27 @@ public sealed class AuthenticationService : IAuthenticationService
         Guid sessionId,
         CancellationToken cancellationToken = default)
     {
-        var session = await _db.UserSessions
-            .SingleOrDefaultAsync(
-                x => x.Id == sessionId &&
-                     x.UserId == userId,
+        await using var transaction =
+            await _db.Database.BeginTransactionAsync(
                 cancellationToken);
 
-        if (session is null || session.RevokedAt is not null)
+        var user = await LockUserAsync(
+            userId,
+            cancellationToken);
+
+        if (user is null)
             return;
+
+        var session = await LockSessionAsync(
+            sessionId,
+            cancellationToken);
+
+        if (session is null ||
+            session.UserId != userId ||
+            session.RevokedAt is not null)
+        {
+            return;
+        }
 
         session.Revoke("user_logout");
 
@@ -284,6 +346,7 @@ public sealed class AuthenticationService : IAuthenticationService
             sessionId));
 
         await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         _logger.LogInformation(
             "Sesión cerrada. UserId={UserId}; SessionId={SessionId}",
@@ -295,10 +358,22 @@ public sealed class AuthenticationService : IAuthenticationService
         Guid userId,
         CancellationToken cancellationToken = default)
     {
+        await using var transaction =
+            await _db.Database.BeginTransactionAsync(
+                cancellationToken);
+
+        var user = await LockUserAsync(
+            userId,
+            cancellationToken);
+
+        if (user is null)
+            return;
+
         var sessions = await _db.UserSessions
             .Where(x =>
                 x.UserId == userId &&
                 x.RevokedAt == null)
+            .OrderBy(x => x.Id)
             .ToListAsync(cancellationToken);
 
         foreach (var session in sessions)
@@ -310,6 +385,7 @@ public sealed class AuthenticationService : IAuthenticationService
             userId));
 
         await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         _logger.LogInformation(
             "Sesiones revocadas. UserId={UserId}; Count={Count}",
@@ -364,6 +440,42 @@ public sealed class AuthenticationService : IAuthenticationService
             user.FirstName,
             user.LastName,
             user.IsEmailVerified);
+    }
+
+    private async Task<User?> LockUserAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var rows = await _db.Users
+            .FromSqlInterpolated(
+                $"SELECT * FROM users WHERE id = {userId} FOR UPDATE")
+            .ToListAsync(cancellationToken);
+
+        return rows.SingleOrDefault();
+    }
+
+    private async Task<UserSession?> LockSessionAsync(
+        Guid sessionId,
+        CancellationToken cancellationToken)
+    {
+        var rows = await _db.UserSessions
+            .FromSqlInterpolated(
+                $"SELECT * FROM user_sessions WHERE id = {sessionId} FOR UPDATE")
+            .ToListAsync(cancellationToken);
+
+        return rows.SingleOrDefault();
+    }
+
+    private async Task<RefreshToken?> LockRefreshTokenAsync(
+        string hash,
+        CancellationToken cancellationToken)
+    {
+        var rows = await _db.RefreshTokens
+            .FromSqlInterpolated(
+                $"SELECT * FROM refresh_tokens WHERE token_hash = {hash} FOR UPDATE")
+            .ToListAsync(cancellationToken);
+
+        return rows.SingleOrDefault();
     }
 
     private async Task RecordRejectedLoginAsync(

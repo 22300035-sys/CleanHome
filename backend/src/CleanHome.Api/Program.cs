@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
+using CleanHome.Api.Security;
 using CleanHome.Application.Abstractions.Administration;
 using CleanHome.Application.Abstractions.Bookings;
 using CleanHome.Application.Abstractions.Catalog;
@@ -18,6 +19,7 @@ using CleanHome.Infrastructure.Persistence.Repositories.Identity;
 using CleanHome.Infrastructure.Security;
 using CleanHome.Infrastructure.Security.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -26,12 +28,10 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Controladores y documentación HTTP.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
 
-// Respuestas estandarizadas para errores HTTP.
 builder.Services.AddProblemDetails(options =>
 {
     options.CustomizeProblemDetails = context =>
@@ -41,17 +41,11 @@ builder.Services.AddProblemDetails(options =>
     };
 });
 
-builder.Services.AddExceptionHandler(options =>
-{
-    options.ExceptionHandlingPath = "/error";
-});
-
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.InvalidModelStateResponseFactory = context =>
     {
-        var problem = new ValidationProblemDetails(
-            context.ModelState)
+        var problem = new ValidationProblemDetails(context.ModelState)
         {
             Status = StatusCodes.Status400BadRequest,
             Title = "Los datos enviados no son válidos.",
@@ -69,7 +63,6 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
     };
 });
 
-// CORS: permitir solamente orígenes conocidos.
 const string frontendCorsPolicy = "CleanHomeFrontend";
 
 var allowedOrigins = builder.Configuration
@@ -77,15 +70,13 @@ var allowedOrigins = builder.Configuration
     .Get<string[]>() ?? [];
 
 if (allowedOrigins.Length == 0)
-{
     throw new InvalidOperationException(
         "Configura Cors:AllowedOrigins.");
-}
 
 foreach (var origin in allowedOrigins)
 {
     if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri) ||
-        !string.IsNullOrEmpty(uri.AbsolutePath.Trim('/')) ||
+        uri.AbsolutePath != "/" ||
         !string.IsNullOrEmpty(uri.Query) ||
         !string.IsNullOrEmpty(uri.Fragment) ||
         (uri.Scheme != Uri.UriSchemeHttps &&
@@ -107,29 +98,24 @@ builder.Services.AddCors(options =>
     });
 });
 
-// PostgreSQL.
 var connectionString =
     builder.Configuration.GetConnectionString("CleanHome");
 
 if (string.IsNullOrWhiteSpace(connectionString))
-{
     throw new InvalidOperationException(
         "Falta ConnectionStrings:CleanHome.");
-}
 
 builder.Services.AddDbContext<CleanHomeDbContext>(
     options => options.UseNpgsql(connectionString));
 
-// Catálogo de servicios.
+// Catálogo.
 builder.Services.AddScoped<ServiceCategoryService>();
-
 builder.Services.AddScoped<
     IServiceCategoryRepository,
     ServiceCategoryRepository>();
 
-// Registro e identidad.
+// Identidad.
 builder.Services.AddScoped<UserRegistrationService>();
-
 builder.Services.AddScoped<
     IUserRegistrationRepository,
     UserRegistrationRepository>();
@@ -158,7 +144,7 @@ builder.Services.AddScoped<
     ISecurityEventRepository,
     SecurityEventRepository>();
 
-// Verificación de correo y recuperación.
+// Recuperación de cuentas.
 builder.Services.AddScoped<
     IAccountRecoveryService,
     AccountRecoveryService>();
@@ -167,22 +153,19 @@ builder.Services.AddScoped<
     IAccountEmailSender,
     SmtpAccountEmailSender>();
 
-// Bloque A.
+// Bloques A, B y C.
 builder.Services.AddScoped<
     IMarketplaceProfileService,
     MarketplaceProfileService>();
 
-// Bloque B.
 builder.Services.AddScoped<
     IServiceBookingService,
     ServiceBookingService>();
 
-// Bloque C.
 builder.Services.AddScoped<
     ICommunityService,
     CommunityService>();
 
-// Administración.
 builder.Services.AddScoped<
     IAdministrationService,
     AdministrationService>();
@@ -191,8 +174,7 @@ builder.Services.AddScoped<
 var jwtOptions = builder.Configuration
     .GetSection(JwtOptions.SectionName)
     .Get<JwtOptions>()
-    ?? throw new InvalidOperationException(
-        "Falta la sección Jwt.");
+    ?? throw new InvalidOperationException("Falta la sección Jwt.");
 
 if (string.IsNullOrWhiteSpace(jwtOptions.Issuer) ||
     string.IsNullOrWhiteSpace(jwtOptions.Audience) ||
@@ -206,10 +188,8 @@ if (string.IsNullOrWhiteSpace(jwtOptions.Issuer) ||
 var keyBytes = Encoding.UTF8.GetBytes(jwtOptions.SigningKey);
 
 if (keyBytes.Length < 32)
-{
     throw new InvalidOperationException(
         "La clave JWT debe contener al menos 32 bytes.");
-}
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -275,17 +255,25 @@ builder.Services
                         context.HttpContext.RequestAborted);
 
                 if (!validSession)
-                {
-                    context.Fail(
-                        "La sesión fue revocada o expiró.");
-                }
+                    context.Fail("La sesión fue revocada o expiró.");
             }
         };
     });
 
-builder.Services.AddAuthorization();
+// Política basada en el estado ACTUAL de PostgreSQL.
+builder.Services.AddScoped<
+    IAuthorizationHandler,
+    VerifiedEmailHandler>();
 
-// Límites básicos de solicitudes.
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("VerifiedEmail", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.AddRequirements(new VerifiedEmailRequirement());
+    });
+});
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode =
@@ -293,14 +281,19 @@ builder.Services.AddRateLimiter(options =>
 
     options.OnRejected = async (context, cancellationToken) =>
     {
+        context.HttpContext.Response.StatusCode =
+            StatusCodes.Status429TooManyRequests;
+
         context.HttpContext.Response.Headers.RetryAfter = "60";
+        context.HttpContext.Response.ContentType =
+            "application/problem+json";
 
         await context.HttpContext.Response.WriteAsJsonAsync(
             new ProblemDetails
             {
                 Status = StatusCodes.Status429TooManyRequests,
                 Title = "Demasiadas solicitudes.",
-                Detail = "Espera un momento antes de intentar nuevamente.",
+                Detail = "Espera antes de intentar nuevamente.",
                 Instance = context.HttpContext.Request.Path
             },
             cancellationToken);
@@ -337,7 +330,6 @@ static RateLimitPartition<string> CreateIpLimiter(
 
 var app = builder.Build();
 
-// Manejo global de excepciones inesperadas.
 app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
@@ -379,9 +371,7 @@ app.UseExceptionHandler(errorApp =>
 });
 
 if (app.Environment.IsDevelopment())
-{
     app.MapOpenApi();
-}
 
 if (!app.Environment.IsDevelopment() &&
     !app.Environment.IsEnvironment("Testing"))
