@@ -8,6 +8,7 @@ using CleanHome.Application.Abstractions.Catalog;
 using CleanHome.Application.Abstractions.Community;
 using CleanHome.Application.Abstractions.Identity;
 using CleanHome.Application.Abstractions.Marketplace;
+using CleanHome.Application.Abstractions.Verification;
 using CleanHome.Application.Features.Catalog;
 using CleanHome.Application.Features.Identity;
 using CleanHome.Infrastructure.Persistence;
@@ -18,6 +19,8 @@ using CleanHome.Infrastructure.Persistence.Repositories;
 using CleanHome.Infrastructure.Persistence.Repositories.Identity;
 using CleanHome.Infrastructure.Security;
 using CleanHome.Infrastructure.Security.Tokens;
+using CleanHome.Infrastructure.Storage;
+using CleanHome.Infrastructure.Validation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics;
@@ -165,6 +168,18 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     ICommunityService,
     CommunityService>();
+
+// Documentos y cuarentena.
+builder.Services.AddScoped<IDocumentFileValidator, LocalDocumentFileValidator>();
+builder.Services.AddScoped<IPrivateQuarantineStorage, LocalPrivateQuarantineStorage>();
+builder.Services.AddScoped<IDocumentUploadService, DocumentUploadService>();
+builder.Services.AddScoped<IContentScanService, LocalContentScanService>();
+builder.Services.AddScoped<
+    IModerationClassificationService,
+    LocalModerationClassificationService>();
+builder.Services.AddScoped<
+    ICustomerLocationService,
+    CustomerLocationService>();
 
 builder.Services.AddScoped<
     IAdministrationService,
@@ -370,8 +385,11 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() ||
+    app.Environment.IsEnvironment("Testing"))
+{
     app.MapOpenApi();
+}
 
 if (!app.Environment.IsDevelopment() &&
     !app.Environment.IsEnvironment("Testing"))

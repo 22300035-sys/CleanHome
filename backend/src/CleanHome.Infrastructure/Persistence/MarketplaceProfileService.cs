@@ -1,4 +1,5 @@
 using CleanHome.Application.Abstractions.Marketplace;
+using CleanHome.Application.Abstractions.Verification;
 using CleanHome.Application.Features.Marketplace;
 using CleanHome.Domain.Entities.Marketplace;
 using Microsoft.EntityFrameworkCore;
@@ -9,10 +10,14 @@ public sealed class MarketplaceProfileService
     : IMarketplaceProfileService
 {
     private readonly CleanHomeDbContext _db;
+    private readonly IIdentityVerificationService _identityVerification;
 
-    public MarketplaceProfileService(CleanHomeDbContext db)
+    public MarketplaceProfileService(
+        CleanHomeDbContext db,
+        IIdentityVerificationService identityVerification)
     {
         _db = db;
+        _identityVerification = identityVerification;
     }
 
     public async Task<UserProfileResponse?> GetUserProfileAsync(
@@ -120,6 +125,11 @@ public sealed class MarketplaceProfileService
         CancellationToken ct)
     {
         var profile = await RequireWorkerAsync(userId, ct);
+
+        if (profile.VerificationStatus != "approved" ||
+            !await _identityVerification.HasApprovedIdentityAsync(userId, ct))
+            throw new InvalidOperationException(
+                "El perfil profesional requiere una aprobación documental vigente.");
 
         var category = await _db.ServiceCategories
             .AsNoTracking()

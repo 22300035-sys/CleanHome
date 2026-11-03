@@ -8,7 +8,7 @@ Permitir registrar domicilios de clientes y validar el comprobante correspondien
 
 ### Requirement: Registro de ubicaciones propias
 
-El sistema DEBE permitir a un cliente registrar y administrar únicamente sus propias ubicaciones.
+El sistema SHALL permitir a un cliente registrar y administrar únicamente sus propias ubicaciones.
 
 #### Scenario: Registro correcto
 - **WHEN** un cliente registra una dirección válida
@@ -20,7 +20,7 @@ El sistema DEBE permitir a un cliente registrar y administrar únicamente sus pr
 
 ### Requirement: Comprobante obligatorio por ubicación
 
-Cada ubicación DEBE contar con un comprobante de domicilio revisado y aprobado antes de ser utilizada para contratar.
+Cada ubicación SHALL contar con un comprobante de domicilio revisado y aprobado antes de ser utilizada para contratar.
 
 #### Scenario: Comprobante aprobado
 - **WHEN** el comprobante coincide con la ubicación y supera todas las verificaciones
@@ -32,7 +32,7 @@ Cada ubicación DEBE contar con un comprobante de domicilio revisado y aprobado 
 
 ### Requirement: Modificación de domicilio
 
-El sistema DEBE invalidar la aprobación de una ubicación cuando cambien sus datos sustanciales de domicilio.
+El sistema SHALL invalidar la aprobación de una ubicación cuando cambien sus datos sustanciales de domicilio.
 
 #### Scenario: Cambio de dirección
 - **WHEN** el cliente modifica la calle o los datos del domicilio
@@ -40,7 +40,7 @@ El sistema DEBE invalidar la aprobación de una ubicación cuando cambien sus da
 
 ### Requirement: Protección de datos de ubicación
 
-El sistema DEBE impedir que las direcciones particulares y sus comprobantes sean accesibles mediante catálogos públicos.
+El sistema SHALL impedir que las direcciones particulares y sus comprobantes sean accesibles mediante catálogos públicos.
 
 #### Scenario: Consulta pública
 - **WHEN** un visitante explora servicios o perfiles
@@ -48,7 +48,7 @@ El sistema DEBE impedir que las direcciones particulares y sus comprobantes sean
 
 ### Requirement: Compatibilidad con reservas existentes
 
-El sistema DEBE conservar la dirección histórica de reservas existentes al introducir referencias a ubicaciones verificadas.
+El sistema SHALL conservar la dirección histórica de reservas existentes al introducir referencias a ubicaciones verificadas.
 
 #### Scenario: Reserva anterior a la nueva función
 - **WHEN** se consulta una reserva creada antes de la migración

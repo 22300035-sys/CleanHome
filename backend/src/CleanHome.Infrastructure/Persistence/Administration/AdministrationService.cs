@@ -260,6 +260,68 @@ public sealed class AdministrationService : IAdministrationService
         await transaction.CommitAsync(ct);
     }
 
+    public async Task ReviewLocationAsync(
+        Guid actorUserId,
+        Guid locationId,
+        ReviewLocationRequest request,
+        CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        await RequireModeratorAsync(actorUserId, ct);
+
+        if (request.Status is not ("approved" or "rejected" or "pending"))
+            throw new ArgumentException("Estado de revisión inválido.");
+
+        ValidateReason(request.Reason);
+
+        if (request.Status == "rejected" &&
+            string.IsNullOrWhiteSpace(request.Reason))
+        {
+            throw new ArgumentException(
+                "Debes indicar el motivo del rechazo.");
+        }
+
+        var location = await _db.CustomerLocations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == locationId, ct);
+
+        if (location is null)
+            throw new KeyNotFoundException("Ubicación no encontrada.");
+
+        if (location.CustomerUserId == actorUserId)
+            throw new AdministrationForbiddenException();
+
+        if (request.Status == "approved")
+        {
+            var approvedProof = await _db.PrivateDocuments
+                .AsNoTracking()
+                .AnyAsync(
+                    x => x.CustomerLocationId == locationId &&
+                         x.OwnerUserId == location.CustomerUserId &&
+                         x.DocumentType == "address_proof" &&
+                         x.SecurityStatus == "clean" &&
+                         x.ModerationStatus == "approved" &&
+                         x.ReviewStatus == "approved",
+                    ct);
+
+            if (!approvedProof)
+                throw new AdministrationConflictException(
+                    "La ubicación solo puede aprobarse con un comprobante aprobado.");
+        }
+
+        if (request.Status == "approved")
+            location.SetVerificationStatus("approved");
+        else if (request.Status == "rejected")
+            location.SetVerificationStatus("rejected");
+
+        _db.SecurityEvents.Add(new SecurityEvent(
+            "admin_location_review",
+            request.Status,
+            actorUserId));
+
+        await _db.SaveChangesAsync(ct);
+    }
+
     public async Task<IReadOnlyList<AdminIncidentResponse>>
         GetIncidentsAsync(
             Guid actorUserId,

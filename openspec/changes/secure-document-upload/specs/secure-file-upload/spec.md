@@ -8,7 +8,7 @@ Permitir recibir archivos de usuarios sin exponer el servidor, los datos persona
 
 ### Requirement: Recepción autenticada de archivos
 
-El sistema DEBE exigir autenticación válida y verificar el propietario y el propósito permitido antes de registrar una carga documental.
+El sistema SHALL exigir autenticación válida y verificar el propietario y el propósito permitido antes de registrar una carga documental.
 
 #### Scenario: Carga de documento propio
 - **WHEN** un usuario autenticado carga un documento permitido de su cuenta
@@ -20,7 +20,7 @@ El sistema DEBE exigir autenticación válida y verificar el propietario y el pr
 
 ### Requirement: Validación estricta del archivo
 
-El sistema DEBE verificar tamaño, firma, estructura, límites de procesamiento y tipo real del archivo, sin confiar en la extensión ni en el Content-Type enviado.
+El sistema SHALL verificar tamaño, firma, estructura, límites de procesamiento y tipo real del archivo, sin confiar en la extensión ni en el Content-Type enviado.
 
 #### Scenario: Imagen válida
 - **WHEN** se recibe una imagen JPEG o PNG válida dentro de los límites
@@ -36,7 +36,7 @@ El sistema DEBE verificar tamaño, firma, estructura, límites de procesamiento 
 
 ### Requirement: Cuarentena privada
 
-El sistema DEBE almacenar los archivos nuevos fuera de rutas públicas y mantenerlos bloqueados hasta completar el procesamiento.
+El sistema SHALL almacenar los archivos nuevos fuera de rutas públicas y mantenerlos bloqueados hasta completar el procesamiento.
 
 #### Scenario: Archivo recién recibido
 - **WHEN** finaliza la recepción de un documento
@@ -48,7 +48,7 @@ El sistema DEBE almacenar los archivos nuevos fuera de rutas públicas y mantene
 
 ### Requirement: Adaptación a Azure
 
-El almacenamiento DEBE abstraerse mediante contratos que permitan implementar Azure Blob Storage privado sin cambiar las reglas de negocio.
+El almacenamiento SHALL abstraerse mediante contratos que permitan implementar Azure Blob Storage privado sin cambiar las reglas de negocio.
 
 #### Scenario: Sustitución del proveedor
 - **WHEN** se configura un almacenamiento privado compatible con el contrato
@@ -56,7 +56,7 @@ El almacenamiento DEBE abstraerse mediante contratos que permitan implementar Az
 
 ### Requirement: Denegación ante fallos
 
-El sistema DEBE impedir el uso de archivos cuyo procesamiento de seguridad esté incompleto o haya fallado.
+El sistema SHALL impedir el uso de archivos cuyo procesamiento de seguridad esté incompleto o haya fallado.
 
 #### Scenario: Analizador no disponible
 - **WHEN** falla un analizador requerido

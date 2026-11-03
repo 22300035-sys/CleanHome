@@ -1,4 +1,5 @@
 using CleanHome.Application.Abstractions.Bookings;
+using CleanHome.Application.Abstractions.Verification;
 using CleanHome.Application.Features.Bookings;
 using CleanHome.Domain.Entities.Bookings;
 using CleanHome.Infrastructure.Persistence;
@@ -9,10 +10,14 @@ namespace CleanHome.Infrastructure.Persistence.Bookings;
 public sealed class ServiceBookingService : IServiceBookingService
 {
     private readonly CleanHomeDbContext _db;
+    private readonly IIdentityVerificationService _identityVerification;
 
-    public ServiceBookingService(CleanHomeDbContext db)
+    public ServiceBookingService(
+        CleanHomeDbContext db,
+        IIdentityVerificationService identityVerification)
     {
         _db = db;
+        _identityVerification = identityVerification;
     }
 
     public async Task<ServiceRequestDto> CreateRequestAsync(
@@ -26,6 +31,10 @@ public sealed class ServiceBookingService : IServiceBookingService
 
         if (!categoryExists)
             throw new ArgumentException("La categoría no está disponible.");
+
+        if (!await _identityVerification.HasApprovedIdentityAsync(userId, ct))
+            throw new ArgumentException(
+                "Se requiere una identidad verificada para crear solicitudes.");
 
         var serviceRequest = new ServiceRequest(
             userId,
@@ -202,6 +211,10 @@ public sealed class ServiceBookingService : IServiceBookingService
         if (worker is null)
             throw new BookingConflictException(
                 "Tu perfil profesional aún no está aprobado.");
+
+        if (!await _identityVerification.HasApprovedIdentityAsync(userId, ct))
+            throw new BookingConflictException(
+                "Se requiere una identidad verificada para cotizar.");
 
         var eligible = await _db.WorkerOfferings.AnyAsync(
             x => x.WorkerProfileId == worker.Id &&
@@ -552,6 +565,10 @@ public sealed class ServiceBookingService : IServiceBookingService
         if (original.Status == "open")
             throw new BookingConflictException(
                 "La solicitud original todavía está abierta.");
+
+        if (!await _identityVerification.HasApprovedIdentityAsync(userId, ct))
+            throw new ArgumentException(
+                "Se requiere una identidad verificada para repetir solicitudes.");
 
         var address = await _db.ServiceRequestAddresses.AsNoTracking()
             .SingleAsync(x => x.ServiceRequestId == requestId, ct);

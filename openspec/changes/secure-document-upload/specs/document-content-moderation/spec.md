@@ -8,7 +8,7 @@ Examinar imágenes y documentos antes de utilizarlos, detectando amenazas inform
 
 ### Requirement: Análisis antimalware
 
-El sistema DEBE someter los archivos a un analizador antimalware antes de declararlos seguros.
+El sistema SHALL someter los archivos a un analizador antimalware antes de declararlos seguros.
 
 #### Scenario: Archivo sin detecciones
 - **WHEN** el analizador completa correctamente la inspección sin detectar amenazas
@@ -24,7 +24,7 @@ El sistema DEBE someter los archivos a un analizador antimalware antes de declar
 
 ### Requirement: Moderación de imágenes
 
-El sistema DEBE analizar las imágenes para identificar contenido sexual explícito o inapropiado, utilizando un modelo de licencia compatible con el proyecto.
+El sistema SHALL analizar las imágenes para identificar contenido sexual explícito o inapropiado, utilizando un modelo de licencia compatible con el proyecto.
 
 #### Scenario: Contenido permitido
 - **WHEN** el análisis concluye que una imagen cumple la política de contenido
@@ -40,7 +40,7 @@ El sistema DEBE analizar las imágenes para identificar contenido sexual explíc
 
 ### Requirement: Inspección de PDF
 
-El sistema DEBE inspeccionar la estructura de los PDF y moderar visualmente su contenido representable sin ejecutar código incorporado.
+El sistema SHALL inspeccionar la estructura de los PDF y moderar visualmente su contenido representable sin ejecutar código incorporado.
 
 #### Scenario: PDF con contenido visual
 - **WHEN** se recibe un PDF permitido
@@ -52,7 +52,7 @@ El sistema DEBE inspeccionar la estructura de los PDF y moderar visualmente su c
 
 ### Requirement: Separación de resultados
 
-El sistema DEBE registrar los resultados de seguridad y moderación independientemente de la revisión documental.
+El sistema SHALL registrar los resultados de seguridad y moderación independientemente de la revisión documental.
 
 #### Scenario: Documento seguro pero inapropiado
 - **WHEN** un documento supera el antivirus pero falla la moderación
@@ -60,7 +60,7 @@ El sistema DEBE registrar los resultados de seguridad y moderación independient
 
 ### Requirement: Privacidad del procesamiento
 
-El sistema DEBE evitar enviar documentos de identidad a proveedores externos sin una autorización y evaluación de privacidad explícitas.
+El sistema SHALL evitar enviar documentos de identidad a proveedores externos sin una autorización y evaluación de privacidad explícitas.
 
 #### Scenario: Servicio externo no autorizado
 - **WHEN** una integración intenta enviar archivos sensibles a un proveedor no aprobado

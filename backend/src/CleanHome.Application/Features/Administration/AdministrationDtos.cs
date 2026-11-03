@@ -25,6 +25,10 @@ public sealed record ReviewDocumentRequest(
     string Status,
     string? Reason);
 
+public sealed record ReviewLocationRequest(
+    string Status,
+    string? Reason);
+
 public sealed record AdminIncidentResponse(
     Guid Id,
     Guid ReporterUserId,

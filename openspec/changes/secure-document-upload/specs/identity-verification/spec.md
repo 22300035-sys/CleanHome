@@ -8,7 +8,7 @@ Comprobar documentalmente la identidad declarada de clientes y trabajadores ante
 
 ### Requirement: Documentación obligatoria para ambos perfiles
 
-El sistema DEBE exigir correo verificado, identificación oficial válida y fotografía personal aprobada tanto a clientes como a trabajadores.
+El sistema SHALL exigir correo verificado, identificación oficial válida y fotografía personal aprobada tanto a clientes como a trabajadores.
 
 #### Scenario: Cliente con documentos completos
 - **WHEN** el cliente tiene correo verificado e identificación y fotografía aprobadas
@@ -20,7 +20,7 @@ El sistema DEBE exigir correo verificado, identificación oficial válida y foto
 
 ### Requirement: Identificación oficial
 
-El sistema DEBE exigir las caras necesarias de la identificación oficial según el tipo de documento aceptado.
+El sistema SHALL exigir las caras necesarias de la identificación oficial según el tipo de documento aceptado.
 
 #### Scenario: Identificación incompleta
 - **WHEN** falta una cara obligatoria de la identificación
@@ -28,7 +28,7 @@ El sistema DEBE exigir las caras necesarias de la identificación oficial según
 
 ### Requirement: Revisión administrativa
 
-El sistema DEBE permitir que personal administrativo autorizado apruebe o rechace documentos después de las comprobaciones técnicas y de contenido.
+El sistema SHALL permitir que personal administrativo autorizado apruebe o rechace documentos después de las comprobaciones técnicas y de contenido.
 
 #### Scenario: Documento seguro y revisado
 - **WHEN** seguridad y moderación están aprobadas y un revisor autorizado valida el documento
@@ -40,7 +40,7 @@ El sistema DEBE permitir que personal administrativo autorizado apruebe o rechac
 
 ### Requirement: Reemplazo de documentos
 
-El sistema DEBE permitir sustituir documentos rechazados y volver a ejecutar las verificaciones obligatorias.
+El sistema SHALL permitir sustituir documentos rechazados y volver a ejecutar las verificaciones obligatorias.
 
 #### Scenario: Sustitución de identificación rechazada
 - **WHEN** el usuario reemplaza un documento rechazado
@@ -48,7 +48,7 @@ El sistema DEBE permitir sustituir documentos rechazados y volver a ejecutar las
 
 ### Requirement: Separación entre identidad y visibilidad
 
-El sistema DEBE mantener las fotografías documentales privadas, sin publicarlas automáticamente como fotografías de perfil.
+El sistema SHALL mantener las fotografías documentales privadas, sin publicarlas automáticamente como fotografías de perfil.
 
 #### Scenario: Identidad aprobada
 - **WHEN** un usuario obtiene aprobación documental

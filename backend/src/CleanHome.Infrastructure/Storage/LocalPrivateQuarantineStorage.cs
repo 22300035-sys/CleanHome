@@ -16,7 +16,9 @@ public sealed class LocalPrivateQuarantineStorage
         IConfiguration configuration)
     {
         var environmentName =
-            Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+            configuration["Hosting:Environment"]
+            ?? configuration["ASPNETCORE_ENVIRONMENT"]
+            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
             ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
             ?? "Production";
 
@@ -107,7 +109,9 @@ public sealed class LocalPrivateQuarantineStorage
                     cancellationToken);
 
                 if (read == 0)
+                {
                     break;
+                }
 
                 if (total + read > MaxFileBytes)
                 {
@@ -149,5 +153,22 @@ public sealed class LocalPrivateQuarantineStorage
             if (!completed && File.Exists(destination))
                 File.Delete(destination);
         }
+    }
+
+    public Task<bool> DeleteAsync(
+        string storageKey,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(storageKey))
+            return Task.FromResult(false);
+
+        var destination = Path.Combine(_directory, storageKey);
+
+        if (!File.Exists(destination))
+            return Task.FromResult(false);
+
+        File.Delete(destination);
+
+        return Task.FromResult(true);
     }
 }

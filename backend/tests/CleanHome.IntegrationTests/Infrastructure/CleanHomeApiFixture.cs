@@ -31,6 +31,7 @@ public sealed class CleanHomeApiFixture : IDisposable
 
     private readonly string? _previousConnectionString;
     private readonly string? _previousJwtKey;
+    private readonly string? _previousEnvironmentName;
 
     private bool _disposed;
 
@@ -60,6 +61,9 @@ public sealed class CleanHomeApiFixture : IDisposable
         _previousJwtKey =
             Environment.GetEnvironmentVariable(JwtKeyVariable);
 
+        _previousEnvironmentName =
+            Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
         Environment.SetEnvironmentVariable(
             ApiConnectionVariable,
             connectionString);
@@ -67,6 +71,10 @@ public sealed class CleanHomeApiFixture : IDisposable
         Environment.SetEnvironmentVariable(
             JwtKeyVariable,
             TestSigningKey);
+
+        Environment.SetEnvironmentVariable(
+            "ASPNETCORE_ENVIRONMENT",
+            "Testing");
 
         try
         {
@@ -148,5 +156,9 @@ public sealed class CleanHomeApiFixture : IDisposable
         Environment.SetEnvironmentVariable(
             JwtKeyVariable,
             _previousJwtKey);
+
+        Environment.SetEnvironmentVariable(
+            "ASPNETCORE_ENVIRONMENT",
+            _previousEnvironmentName);
     }
 }

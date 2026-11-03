@@ -67,6 +67,19 @@ public sealed class AdministrationController : ControllerBase
             return NoContent();
         });
 
+    [HttpPost("locations/{locationId:guid}/review")]
+    public Task<IActionResult> ReviewLocation(
+        Guid locationId,
+        [FromBody] ReviewLocationRequest request,
+        CancellationToken ct) =>
+        Execute(async () =>
+        {
+            await _service.ReviewLocationAsync(
+                UserId(), locationId, request, ct);
+
+            return NoContent();
+        });
+
     [HttpGet("incidents")]
     public Task<IActionResult> Incidents(
         [FromQuery] string? status,

@@ -10,4 +10,8 @@ public interface IPrivateQuarantineStorage
     Task<QuarantinedFile> SaveAsync(
         Stream content,
         CancellationToken cancellationToken = default);
+
+    Task<bool> DeleteAsync(
+        string storageKey,
+        CancellationToken cancellationToken = default);
 }

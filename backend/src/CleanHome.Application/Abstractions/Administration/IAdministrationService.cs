@@ -30,6 +30,12 @@ public interface IAdministrationService
         ReviewDocumentRequest request,
         CancellationToken ct);
 
+    Task ReviewLocationAsync(
+        Guid actorUserId,
+        Guid locationId,
+        ReviewLocationRequest request,
+        CancellationToken ct);
+
     Task<IReadOnlyList<AdminIncidentResponse>> GetIncidentsAsync(
         Guid actorUserId,
         string? status,

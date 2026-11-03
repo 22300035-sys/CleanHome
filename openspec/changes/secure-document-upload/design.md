@@ -301,6 +301,18 @@ mecanismo de autenticación.
 Se devolverán respuestas que no permitan inferir el contenido
 de documentos ajenos.
 
+Matriz de permisos documentales:
+
+| Persona | Consultar documentos propios | Revisar documentos | Acceso de soporte |
+| --- | --- | --- | --- |
+| Propietario | Permitido | No | No |
+| Administrador | Permitido | Permitido | No |
+| Soporte | No | No | Permitido con incidencia válida relacionada |
+
+El acceso del soporte se tramita exclusivamente con incidencia
+justificada, motivo registrado y auditoría; no usa la vía de
+revisión administrativa.
+
 ### 11. Auditoría y privacidad
 
 DocumentAccessAudit almacenará:
@@ -340,6 +352,24 @@ La identidad verificada se determinará desde los documentos vigentes
 y aprobados, sin confiar únicamente en información del frontend.
 
 La fotografía documental no será pública automáticamente.
+
+### 12.1 Identificación oficial aceptada y caras obligatorias
+
+Decisiones tomadas para el primer incremento:
+
+- Tipos de documento aceptados inicialmente:
+  - `identity_front`: identificación oficial (frente).
+  - `identity_back`: identificación oficial (reverso).
+  - `portrait`: fotografía personal del titular.
+  - `address_proof`: comprobante de domicilio.
+- Caras obligatorias:
+  - La identificación oficial exige presentar frente y reverso.
+  - La fotografía personal exige el rostro del titular.
+- Criterios de revisión manual:
+  - El revisor autorizado contrastará la fotografía con el
+    documento y con el titular declarado.
+  - Los documentos incompletos o ambiguos permanecerán en
+    revisión hasta que se resuelva la duda.
 
 ### 13. Ubicaciones verificadas
 
