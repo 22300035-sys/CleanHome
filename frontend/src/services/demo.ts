@@ -83,7 +83,11 @@ export class DemoApi implements Transport {
       if (parts[1] && (method === 'PUT' || method === 'DELETE')) {
         const location = s.locations.find(l => l.id === parts[1] && l.customerId === actor.id) ?? fail(404, 'Dirección no encontrada.');
         if (s.requests.some(r => r.locationId === location.id)) fail(409, 'Esta dirección forma parte del historial de una solicitud. Guarda una dirección nueva para próximos servicios.');
-        if (method === 'PUT') { Object.assign(location, body); result = location; }
+        if (method === 'PUT') {
+          if (![body.label, body.address, body.city].every(value => typeof value === 'string' && value.trim())) fail(400, 'Dirección incompleta.');
+          location.label = body.label.trim(); location.address = body.address.trim(); location.city = body.city.trim();
+          result = location;
+        }
         else s.locations = s.locations.filter(l => l.id !== location.id);
       }
       else if (method === 'POST') { const location = { ...body, id: crypto.randomUUID(), customerId: actor.id }; s.locations.push(location); result = location; }
