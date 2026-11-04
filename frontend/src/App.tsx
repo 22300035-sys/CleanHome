@@ -1,122 +1,59 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { Component } from 'react';
+import type { ReactNode } from 'react';
+import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
+import { AppProvider } from './app/context';
+import { Shell } from './components/Shell';
+import { Access, Recovery, ResetPassword } from './pages/Access';
+import { Home, Requests } from './pages/Dashboard';
+import { Catalog, RequestWizard } from './pages/RequestWizard';
+import { QuoteForm, Quotes, WorkerProfile } from './pages/Quotes';
+import { BookingPage, Bookings, Checkout, PaymentReturn } from './pages/Bookings';
+import { Addresses, Documents, Help, Notifications, ProfilePage } from './pages/Account';
+import { Conversation, Inbox } from './pages/Messages';
+import { Payments } from './pages/Payments';
+import { Admin } from './pages/Admin';
+import './App.css';
+import { PwaUpdate } from './components/PwaUpdate';
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() {
+    if (this.state.failed) return <main className="access-page"><h1>No pudimos mostrar esta pantalla</h1><p>Vuelve a cargar para intentar de nuevo. Tus reservas guardadas siguen en tu cuenta.</p><button className="button button-primary" onClick={() => window.location.reload()}>Volver a cargar</button></main>;
+    return this.props.children;
+  }
+}
+export default function App() {
+  return <ErrorBoundary><BrowserRouter><AppProvider><a className="skip-link" href="#contenido">Saltar al contenido</a><Routes>
+    <Route path="/acceso" element={<Access />} />
+    <Route path="/recuperar" element={<Recovery />} />
+    <Route path="/restablecer" element={<ResetPassword />} />
+    <Route element={<Shell />}>
+      <Route index element={<Home />} />
+      <Route path="inicio" element={<Home />} />
+      <Route path="catalogo" element={<Catalog />} />
+      <Route path="solicitar/:step" element={<RequestWizard />} />
+      <Route path="solicitudes" element={<Requests />} />
+      <Route path="solicitudes/:id/cotizaciones" element={<Quotes />} />
+      <Route path="cotizar/:id" element={<QuoteForm />} />
+      <Route path="profesionales/:id" element={<WorkerProfile />} />
+      <Route path="reservas" element={<Bookings />} />
+      <Route path="reservas/:id" element={<BookingPage />} />
+      <Route path="reservas/:id/pago" element={<Checkout />} />
+      <Route path="payments/:result" element={<PaymentReturn />} />
+      <Route path="mensajes" element={<Inbox />} />
+      <Route path="mensajes/:id" element={<Conversation />} />
+      <Route path="perfil" element={<ProfilePage />} />
+      <Route path="direcciones" element={<Addresses />} />
+      <Route path="documentos" element={<Documents />} />
+      <Route path="notificaciones" element={<Notifications />} />
+      <Route path="ganancias" element={<Payments earnings />} />
+      <Route path="pagos" element={<Payments />} />
+      <Route path="ayuda" element={<Help />} />
+      <Route path="admin" element={<Admin />} />
+      <Route path="admin/:section" element={<Admin />} />
+      <Route path="*" element={<div className="page-stack"><h1>Esta página no existe</h1><Link to="/inicio" className="button button-primary">Volver al inicio</Link></div>} />
+    </Route>
+  </Routes><PwaUpdate /></AppProvider></BrowserRouter></ErrorBoundary>;
 }
 
-export default App

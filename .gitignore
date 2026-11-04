@@ -1,4 +1,6 @@
 # .NET
+**/App_Data/
+**/.tools/
 **/bin/
 **/obj/
 **/TestResults/
@@ -9,9 +11,12 @@
 **/node_modules/
 **/dist/
 **/coverage/
+**/playwright-report/
+**/test-results/
 **/.vite/
 
 # Configuración privada
+.local-services/
 .env
 .env.*
 !.env.example

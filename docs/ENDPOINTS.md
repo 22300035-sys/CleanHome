@@ -1,0 +1,62 @@
+# Contrato de endpoints
+
+Exportado de la API ejecutada el 4 de noviembre de 2026. 56 operaciones. Roles y reglas de propiedad se aplican en el servidor. Consulta openapi.json para esquemas y respuestas.
+
+| Método | Ruta | Autenticación |
+|---|---|---|
+| GET | /api/v1/admin/audit | Bearer |
+| GET | /api/v1/admin/bookings | Bearer |
+| GET | /api/v1/admin/documents | Bearer |
+| POST | /api/v1/admin/documents/{id}/review | Bearer |
+| GET | /api/v1/admin/payments | Bearer |
+| POST | /api/v1/admin/payments/{id}/refund | Bearer |
+| GET | /api/v1/admin/profiles | Bearer |
+| POST | /api/v1/admin/profiles/{id}/suspend | Bearer |
+| POST | /api/v1/admin/profiles/{id}/verify | Bearer |
+| GET | /api/v1/admin/requests | Bearer |
+| POST | /api/v1/admin/service-categories | Bearer |
+| POST | /api/v1/admin/service-categories/{id}/deactivate | Bearer |
+| GET | /api/v1/auth/confirmEmail | Pública |
+| POST | /api/v1/auth/forgotPassword | Pública |
+| POST | /api/v1/auth/login | Pública |
+| POST | /api/v1/auth/logout | Bearer |
+| POST | /api/v1/auth/manage/2fa | Bearer |
+| GET | /api/v1/auth/manage/info | Bearer |
+| POST | /api/v1/auth/manage/info | Bearer |
+| POST | /api/v1/auth/refresh | Pública |
+| POST | /api/v1/auth/register | Pública |
+| POST | /api/v1/auth/resendConfirmationEmail | Pública |
+| POST | /api/v1/auth/resetPassword | Pública |
+| GET | /api/v1/bookings | Bearer |
+| GET | /api/v1/bookings/{id} | Bearer |
+| POST | /api/v1/bookings/{id}/checkout | Bearer |
+| GET | /api/v1/bookings/{id}/messages | Bearer |
+| POST | /api/v1/bookings/{id}/messages | Bearer |
+| GET | /api/v1/bookings/{id}/payment | Bearer |
+| POST | /api/v1/bookings/{id}/status | Bearer |
+| POST | /api/v1/documents | Bearer |
+| GET | /api/v1/documents | Bearer |
+| DELETE | /api/v1/documents/{id} | Bearer |
+| GET | /api/v1/documents/{id}/download | Bearer |
+| POST | /api/v1/locations | Bearer |
+| GET | /api/v1/locations | Bearer |
+| PUT | /api/v1/locations/{id} | Bearer |
+| DELETE | /api/v1/locations/{id} | Bearer |
+| GET | /api/v1/notifications | Bearer |
+| POST | /api/v1/notifications/{id}/read | Bearer |
+| POST | /api/v1/payments/webhooks/{provider} | Pública |
+| PUT | /api/v1/profiles/me | Bearer |
+| POST | /api/v1/profiles/me | Bearer |
+| GET | /api/v1/profiles/me | Bearer |
+| POST | /api/v1/quotes/{id}/accept | Bearer |
+| POST | /api/v1/requests | Bearer |
+| GET | /api/v1/requests | Bearer |
+| GET | /api/v1/requests/{id} | Bearer |
+| POST | /api/v1/requests/{id}/cancel | Bearer |
+| POST | /api/v1/requests/{id}/quotes | Bearer |
+| GET | /api/v1/requests/{id}/quotes | Bearer |
+| GET | /api/v1/service-categories | Pública |
+| GET | /api/v1/service-categories/{id} | Pública |
+| GET | /api/v1/workers/{id} | Bearer |
+| GET | /health | Pública |
+| GET | /health/ready | Pública |

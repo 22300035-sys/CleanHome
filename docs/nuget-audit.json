@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "parameters": "--vulnerable --include-transitive",
+  "sources": [
+    "https://api.nuget.org/v3/index.json"
+  ],
+  "projects": [
+    {
+      "path": "C:/Users/Doria/OneDrive/Documentos/ChatGPT/dorms21/cleanhome-audit/CleanHome-main/backend/src/CleanHome.Api/CleanHome.Api.csproj"
+    },
+    {
+      "path": "C:/Users/Doria/OneDrive/Documentos/ChatGPT/dorms21/cleanhome-audit/CleanHome-main/backend/src/CleanHome.Application/CleanHome.Application.csproj"
+    },
+    {
+      "path": "C:/Users/Doria/OneDrive/Documentos/ChatGPT/dorms21/cleanhome-audit/CleanHome-main/backend/src/CleanHome.Domain/CleanHome.Domain.csproj"
+    },
+    {
+      "path": "C:/Users/Doria/OneDrive/Documentos/ChatGPT/dorms21/cleanhome-audit/CleanHome-main/backend/src/CleanHome.Infrastructure/CleanHome.Infrastructure.csproj"
+    },
+    {
+      "path": "C:/Users/Doria/OneDrive/Documentos/ChatGPT/dorms21/cleanhome-audit/CleanHome-main/backend/tests/CleanHome.IntegrationTests/CleanHome.IntegrationTests.csproj"
+    },
+    {
+      "path": "C:/Users/Doria/OneDrive/Documentos/ChatGPT/dorms21/cleanhome-audit/CleanHome-main/backend/tests/CleanHome.UnitTests/CleanHome.UnitTests.csproj"
+    }
+  ]
+}

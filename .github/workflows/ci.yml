@@ -23,26 +23,11 @@ concurrency:
 jobs:
   backend:
     name: Backend - Build and PostgreSQL Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
-    services:
-      postgres:
-        image: postgres:18
-        env:
-          POSTGRES_USER: cleanhome_app
-          POSTGRES_PASSWORD: cleanhome_ci_test_only
-          POSTGRES_DB: cleanhome_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U cleanhome_app -d cleanhome_test"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
     env:
-      CLEANHOME_TEST_CONNECTION_STRING: "Host=localhost;Port=5432;Database=cleanhome_test;Username=cleanhome_app;Password=cleanhome_ci_test_only"
+      CLEANHOME_TEST_CONNECTION_STRING: "Host=localhost;Port=55432;Database=cleanhome_test;Username=cleanhome_app;Password=cleanhome_ci_test_only"
 
     steps:
       - name: Checkout
@@ -53,8 +38,22 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Install native PostgreSQL 18 (no containers)
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl --fail -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt noble-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update
+          sudo apt-get install -y postgresql-18
+          sudo pg_createcluster 18 cleanhome --port 55432 --start
+          sudo -u postgres psql -p 55432 -v ON_ERROR_STOP=1 -c "CREATE ROLE cleanhome_app LOGIN PASSWORD 'cleanhome_ci_test_only';"
+          sudo -u postgres psql -p 55432 -v ON_ERROR_STOP=1 -c "CREATE DATABASE cleanhome_test OWNER cleanhome_app;"
       - name: Restore
         run: dotnet restore backend/CleanHome.slnx
+
+      - name: Audit backend dependencies
+        shell: pwsh
+        run: ./scripts/Audit-Dependencies.ps1
 
       - name: Build without warnings
         run: >
@@ -69,10 +68,20 @@ jobs:
           --configuration Release
           --no-build
           --verbosity normal
+          --logger trx
+          --results-directory TestResults
 
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: |
+            TestResults/**/*.trx
+            TestResults/nuget-audit.json
   frontend:
     name: Frontend - Quality and Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     defaults:
@@ -104,9 +113,24 @@ jobs:
         env:
           VITE_API_BASE_URL: https://api.example.com/api/v1
 
+      - name: Install browser for UI tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Run frontend browser tests
+        run: npm run test:e2e
+
+      - name: Upload frontend evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-browser-results
+          path: |
+            frontend/test-results/
+            frontend/playwright-report/
+
   secrets:
     name: Security - Gitleaks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     steps:
@@ -134,7 +158,7 @@ jobs:
 
   sast:
     name: Security - Semgrep OSS
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     steps:
@@ -163,3 +187,5 @@ jobs:
             --exclude '**/node_modules' \
             --exclude '**/dist' \
             backend frontend/src
+
+
