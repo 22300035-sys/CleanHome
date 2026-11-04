@@ -1,0 +1,15 @@
+title = "CleanHome secret scanning"
+
+[extend]
+useDefault = true
+
+# Public Figma design identifier from the shared design URL, not an API token.
+# Match this exact identifier AND document only, including its historical commits.
+# Other values in this document and all other credential rules remain scanned.
+[[allowlists]]
+description = "Public CleanHome Figma file identifier"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''(^|[/\\])docs[/\\]FIGMA_IMPLEMENTACION\.json$''']
+regexTarget = "secret"
+regexes = ['''^2TSIoOrRaqJkGD7kroz07b$''']
