@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\CleanHome.Application\CleanHome.Application.csproj" />
+    <ProjectReference Include="..\..\src\CleanHome.Infrastructure\CleanHome.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\CleanHome.Domain\CleanHome.Domain.csproj" />
   </ItemGroup>
 

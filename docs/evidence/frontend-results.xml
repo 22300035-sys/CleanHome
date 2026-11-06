@@ -1,0 +1,22 @@
+<testsuites id="" name="" tests="9" failures="0" skipped="0" errors="0" time="54.391504999999995">
+<testsuite name="cleanhome.spec.ts" timestamp="2026-11-04T18:58:13.925Z" hostname="" tests="9" failures="0" skipped="0" time="50.435" errors="0">
+<testcase name="pantallas de cliente, trabajador y administración sin imágenes rotas ni desbordamientos" classname="cleanhome.spec.ts" time="9.608">
+</testcase>
+<testcase name="recorrido completo de demostración: solicitud, cotización, pago simulado y servicio" classname="cleanhome.spec.ts" time="9.033">
+</testcase>
+<testcase name="chat persiste el mensaje de demostración y lo presenta como texto, sin ejecutar HTML" classname="cleanhome.spec.ts" time="1.416">
+</testcase>
+<testcase name="administración requiere una cuenta autorizada y la demostración no hace peticiones reales" classname="cleanhome.spec.ts" time="1.861">
+</testcase>
+<testcase name="login muestra errores del servidor sin revelar tokens ni entrar a la cuenta" classname="cleanhome.spec.ts" time="0.987">
+</testcase>
+<testcase name="cliente real: registro, dirección privada y publicación contra PostgreSQL aislado" classname="cleanhome.spec.ts" time="3.507">
+</testcase>
+<testcase name="PWA instala solo recursos estáticos y permite explorar la demostración sin conexión" classname="cleanhome.spec.ts" time="2.28">
+</testcase>
+<testcase name="responsive: los controles permanecen accesibles en 320, 768 y 1440 píxeles" classname="cleanhome.spec.ts" time="5.313">
+</testcase>
+<testcase name="flujo conectado local: administración verifica al trabajador y el chat llega por SignalR" classname="cleanhome.spec.ts" time="16.43">
+</testcase>
+</testsuite>
+</testsuites>

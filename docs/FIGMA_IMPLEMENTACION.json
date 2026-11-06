@@ -1,0 +1,92 @@
+{
+  "fileKey": "2TSIoOrRaqJkGD7kroz07b",
+  "references": [
+    {
+      "name": "home",
+      "nodeId": "0:3",
+      "route": "/inicio"
+    },
+    {
+      "name": "login",
+      "nodeId": "0:204",
+      "route": "/acceso"
+    },
+    {
+      "name": "request1",
+      "nodeId": "0:305",
+      "route": "/solicitar/1"
+    },
+    {
+      "name": "request2",
+      "nodeId": "0:1650",
+      "route": "/solicitar/2"
+    },
+    {
+      "name": "request3",
+      "nodeId": "0:1074",
+      "route": "/solicitar/3"
+    },
+    {
+      "name": "quotes",
+      "nodeId": "0:432",
+      "route": "/solicitudes/:id/cotizaciones"
+    },
+    {
+      "name": "payment",
+      "nodeId": "0:693",
+      "route": "/reservas/:id/pago"
+    },
+    {
+      "name": "radar",
+      "nodeId": "0:2189",
+      "route": "/solicitudes"
+    },
+    {
+      "name": "earnings",
+      "nodeId": "0:1458",
+      "route": "/ganancias"
+    },
+    {
+      "name": "transactions",
+      "nodeId": "102:2",
+      "route": "/pagos"
+    },
+    {
+      "name": "profile",
+      "nodeId": "102:371",
+      "route": "/perfil"
+    },
+    {
+      "name": "admin",
+      "nodeId": "102:650",
+      "route": "/admin"
+    },
+    {
+      "name": "bookings",
+      "nodeId": "102:1203",
+      "route": "/reservas"
+    },
+    {
+      "name": "quote-form",
+      "nodeId": "102:1459",
+      "route": "/cotizar/:id"
+    },
+    {
+      "name": "notifications",
+      "nodeId": "102:2563",
+      "route": "/notificaciones"
+    },
+    {
+      "name": "chat",
+      "nodeId": "157:314",
+      "route": "/mensajes/:id"
+    },
+    {
+      "name": "worker",
+      "nodeId": "162:55",
+      "route": "/profesionales/:id"
+    }
+  ],
+  "screenshots": "screenshots",
+  "scope": "17 referencias consultadas; vistas restantes adaptadas al sistema visual."
+}
