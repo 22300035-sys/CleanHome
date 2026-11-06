@@ -10,8 +10,8 @@ export function Icon({ screen = 'home', name = 'imgContainer18', className = '' 
   const asset = allAssets[screen]?.[name];
   return asset ? <span className={`icon ${className}`} aria-hidden="true"><img src={asset.src} width={asset.width} height={asset.height} alt="" draggable={false} /></span> : null;
 }
-export function Brand({ large = false }: { large?: boolean }) {
-  return <Link to="/inicio" className={`brand ${large ? 'brand-large' : ''}`} aria-label="CleanHome, inicio"><span className="brand-mark"><Icon screen={large ? 'login' : 'home'} name={large ? 'imgContainer' : 'imgContainer15'} /></span><span className="brand-name">Clean<span>Home</span><i /></span></Link>;
+export function Brand({ large = false, to = '/inicio' }: { large?: boolean; to?: string }) {
+  return <Link to={to} className={`brand ${large ? 'brand-large' : ''}`} aria-label="CleanHome, inicio"><span className="brand-mark"><Icon screen={large ? 'login' : 'home'} name={large ? 'imgContainer' : 'imgContainer15'} /></span><span className="brand-name">Clean<span>Home</span><i /></span></Link>;
 }
 export function Button({ children, variant = 'primary', className = '', busy, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost' | 'danger'; busy?: boolean }) {
   return <button type="button" {...props} disabled={props.disabled || busy} aria-busy={busy || undefined} className={`button button-${variant} ${className}`}>{busy ? <span className="spinner" aria-hidden="true" /> : null}{children}</button>;

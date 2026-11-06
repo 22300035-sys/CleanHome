@@ -14,6 +14,7 @@ import { Payments } from './pages/Payments';
 import { Admin } from './pages/Admin';
 import './App.css';
 import { PwaUpdate } from './components/PwaUpdate';
+import { Landing } from './pages/Landing';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -25,11 +26,11 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean
 }
 export default function App() {
   return <ErrorBoundary><BrowserRouter><AppProvider><a className="skip-link" href="#contenido">Saltar al contenido</a><Routes>
+    <Route path="/" element={<Landing />} />
     <Route path="/acceso" element={<Access />} />
     <Route path="/recuperar" element={<Recovery />} />
     <Route path="/restablecer" element={<ResetPassword />} />
     <Route element={<Shell />}>
-      <Route index element={<Home />} />
       <Route path="inicio" element={<Home />} />
       <Route path="catalogo" element={<Catalog />} />
       <Route path="solicitar/:step" element={<RequestWizard />} />
