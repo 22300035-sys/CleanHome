@@ -82,17 +82,17 @@ Configurar mediante variables de entorno o User Secrets:
 | Variable | Uso |
 |---|---|
 | `Payments__ReturnBaseUrl` | URL HTTPS del frontend para success/cancel/pending |
-| `Payments__PublicApiUrl` | URL HTTPS pública de la API para Mercado Pago |
 | `Payments__Stripe__SecretKey` | Clave privada Stripe del entorno correspondiente |
 | `Payments__Stripe__WebhookSecret` | Secreto de firma Stripe |
-| `Payments__MercadoPago__AccessToken` | Token privado de Mercado Pago |
+| `Payments__MercadoPago__AccessToken` | Token privado del vendedor de la aplicación Checkout Pro Orders |
 | `Payments__MercadoPago__WebhookSecret` | Secreto de firma Mercado Pago |
-| `Payments__MercadoPago__Sandbox` | `true` para checkout sandbox, `false` al habilitar producción |
+
+Mercado Pago usa ahora `POST /v1/orders` y `checkout_url`, sin Preferences ni `sandbox_init_point`. El entorno depende de las credenciales/cuenta del vendedor, no de un booleano Sandbox. Para pruebas usar un vendedor de prueba y sus credenciales según el panel de Orders; nunca las de la cuenta comercial real. [Configuración y alcance](docs/MERCADO_PAGO_ORDERS.md).
 
 Registrar webhooks públicos HTTPS:
 
 - Stripe: `/api/v1/payments/webhooks/stripe`; eventos `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`, `charge.dispute.created`.
-- Mercado Pago: `/api/v1/payments/webhooks/mercadopago`; notificaciones de tipo `payment`, conservando `data.id` en query y encabezados `x-signature`, `x-request-id`.
+- Mercado Pago: `/api/v1/payments/webhooks/mercadopago`; seleccionar **Order (Mercado Pago)**, tipo `order`, conservando `data.id` en query y encabezados `x-signature`, `x-request-id`. Registrar la URL en el panel; no se envía `notification_url` al crear una order.
 
 Se verifica HMAC y tolerancia de tiempo, se vuelve a consultar la API del proveedor y se comprueban referencia, importe y moneda. Los reintentos con el mismo pago no duplican cambios de estado. No se confirma por redirección del navegador. `GET /api/v1/bookings/{id}/payment` permite consultar estado. `POST /api/v1/admin/payments/{id}/refund` solicita un reembolso completo; los parciales y disputas requieren conciliación con el proveedor.
 
