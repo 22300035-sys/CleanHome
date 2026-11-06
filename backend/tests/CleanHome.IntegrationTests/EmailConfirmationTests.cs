@@ -14,6 +14,7 @@ using Npgsql;
 
 namespace CleanHome.IntegrationTests;
 
+[Collection("PostgreSQL")]
 public sealed class EmailConfirmationTests
 {
     [Theory]

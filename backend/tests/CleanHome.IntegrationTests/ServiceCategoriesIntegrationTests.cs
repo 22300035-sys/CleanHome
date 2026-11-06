@@ -19,6 +19,7 @@ using Npgsql;
 
 namespace CleanHome.IntegrationTests;
 
+[Collection("PostgreSQL")]
 public sealed class ServiceCategoriesIntegrationTests
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() } };
