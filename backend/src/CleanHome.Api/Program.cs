@@ -18,6 +18,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddLocalFrontendHosting();
 builder.Services.AddControllers().AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddOpenApi(options =>
@@ -126,6 +127,7 @@ if (builder.Configuration.GetValue<bool>("bootstrap-admin"))
     return;
 }
 app.UseExceptionHandler();
+app.UseLocalFrontendHosting();
 app.UseStatusCodePages();
 if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("OpenApi:Enabled"))
 {
@@ -144,6 +146,7 @@ if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"
     app.UseHttpsRedirection();
 }
 app.UseRouting();
+app.UseEmailConfirmationNavigation();
 app.UseCors("Frontend");
 app.UseRateLimiter();
 app.Use(async (context, next) =>
@@ -174,5 +177,6 @@ app.MapGet("/health/ready", async Task<IResult> (CleanHomeDbContext db, Cancella
     }
     catch (Exception) { return Results.StatusCode(503); }
 }).AllowAnonymous();
+app.MapLocalFrontendFallback();
 app.Run();
 public partial class Program { }

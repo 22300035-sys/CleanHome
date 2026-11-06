@@ -58,6 +58,8 @@ if ($Service -eq 'Api' -or $Service -eq 'All') {
     $apiDll = Join-Path $apiRoot 'bin/Release/net10.0/CleanHome.Api.dll'
     $apiUrl = "http://127.0.0.1:$($settings.ApiPort)"
     if ($Foreground) {
+        $smtpConfiguration = Join-Path $stateRoot 'cloudflare/email.json'
+        if (Test-Path -LiteralPath $smtpConfiguration) { . (Join-Path $PSScriptRoot 'Import-SmtpConfiguration.ps1') -ConfigurationPath $smtpConfiguration }
         $secure = ConvertTo-SecureString $settings.ConnectionStringProtected
         $credential = New-Object System.Management.Automation.PSCredential('local', $secure)
         $env:ConnectionStrings__CleanHome = $credential.GetNetworkCredential().Password
